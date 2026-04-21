@@ -1,20 +1,23 @@
 import { Request, Response, NextFunction } from "express";
 import { UnauthorizedExeption } from "../common/exeptions/application.exeption.js";
-import { decodeToken } from "../common/utils/security/token.security.js";
 import { RedisService } from './../common/services/redis.service.js';
+import { JwtPayload } from "jsonwebtoken";
+import { TokenService } from './../common/services/token.service.js';
 declare global {
     namespace Express {
         interface Request {
             userId?: string;
             token?: string;
-            decoded?: any;
+            decoded?: JwtPayload;
         }
     }
 }
 export class AuthMiddleware {
     private redisService: RedisService;
+    private TokenService: TokenService;
     constructor(redisService: RedisService) {
         this.redisService = redisService;
+        this.TokenService = new TokenService();
     }
     auth = async (
         req: Request,
@@ -41,7 +44,7 @@ export class AuthMiddleware {
                     if (!token) {
                         throw new UnauthorizedExeption("Invalid authorization format");
                     }
-                    const data = decodeToken(token) as { id: string };
+                    const data = this.TokenService.decodeToken(token) as JwtPayload;
                     console.log(data);
                     const revokedToken = await this.redisService.get(
                         `RevokeToken::${data.id}::${token}`

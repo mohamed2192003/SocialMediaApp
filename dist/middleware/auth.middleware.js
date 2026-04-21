@@ -1,9 +1,11 @@
 import { UnauthorizedExeption } from "../common/exeptions/application.exeption.js";
-import { decodeToken } from "../common/utils/security/token.security.js";
+import { TokenService } from './../common/services/token.service.js';
 export class AuthMiddleware {
     redisService;
+    TokenService;
     constructor(redisService) {
         this.redisService = redisService;
+        this.TokenService = new TokenService();
     }
     auth = async (req, res, next) => {
         try {
@@ -26,7 +28,7 @@ export class AuthMiddleware {
                     if (!token) {
                         throw new UnauthorizedExeption("Invalid authorization format");
                     }
-                    const data = decodeToken(token);
+                    const data = this.TokenService.decodeToken(token);
                     console.log(data);
                     const revokedToken = await this.redisService.get(`RevokeToken::${data.id}::${token}`);
                     if (revokedToken !== null) {
