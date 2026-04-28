@@ -14,4 +14,5 @@ export interface IUser {
     EmailConfirmation: boolean;
     createdAt?: Date;
     updatedAt?: Date;
+    isDeleted?: boolean;
 }
