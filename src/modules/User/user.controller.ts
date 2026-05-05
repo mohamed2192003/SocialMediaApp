@@ -1,10 +1,17 @@
-// router.patch('/update-user',auth, multerLocal ().single('image'), async(req, res)=>{
-//     let data = await updateUser(req.userId, req.body, req.file)
-//     console.log(req.userId, "from user controller");
-    
-//     return SuccessResponse({res, message:'User Updated Successfully', status:200, data})
-// })
-// router.delete('/delete-user', async(req, res)=>{
-//     let data = await deleteUser(req.userId)
-//     return SuccessResponse({res, message:'User Deleted Successfully', status:200, data:data})
-// })
+import { Request, Response, Router } from "express";
+import { userService } from "./user.service.js";
+import { auth } from "../../middleware/auth.middleware.js";
+import { SuccessResponse } from "../../common/exeptions/success.response.js";
+import { uploadFile } from "../../common/utils/multer/cloud.js";
+import { MulterEnum } from "../../common/enums/multer.enum.js";
+const router = Router()
+router.get('/get-user-profile', auth, async( req: Request, res: Response )=>{
+    let userData = await userService.getUserProfile( req.userId as string )
+    SuccessResponse({ res, message: "User Profile Data", data: userData })
+})
+router.patch('/update-user-profile', auth, uploadFile({storageKey: MulterEnum.diskStorage}).single('file'), async( req: Request, res: Response )=>{
+    console.log(req.file);
+    let userData = await userService.updateUserProfile( req.userId as string, req.file as Express.Multer.File )
+    SuccessResponse({ res, message: "User Profile Data", data: userData })
+})
+export default router

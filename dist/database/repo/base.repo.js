@@ -43,4 +43,14 @@ export class DatabaseRepository {
         }
         return query;
     }
+    findById(id, select, populate) {
+        let query = this.model.findById(id);
+        if (select) {
+            query = query.select(select);
+        }
+        if (populate) {
+            query = query.populate(populate);
+        }
+        return query;
+    }
 }

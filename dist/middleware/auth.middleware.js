@@ -1,4 +1,5 @@
 import { UnauthorizedExeption } from "../common/exeptions/application.exeption.js";
+import { redisConnection } from './../common/services/redis.service.js';
 import { TokenService } from './../common/services/token.service.js';
 export class AuthMiddleware {
     redisService;
@@ -49,3 +50,4 @@ export class AuthMiddleware {
         }
     };
 }
+export const auth = new AuthMiddleware(redisConnection).auth;

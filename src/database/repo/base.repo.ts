@@ -54,4 +54,18 @@ export class DatabaseRepository<TRowDocs> { //TRawDocs => customed interface
         }
         return query;
     }
+    findById(
+        id: string,
+        select?: string | Record<string, 0 | 1>,
+        populate?: PopulateOptions | PopulateOptions[]
+    ) {
+        let query = this.model.findById(id);
+        if (select) {
+            query = query.select(select);
+        }
+        if (populate) {
+            query = query.populate(populate);
+        }
+        return query;
+    }
 }

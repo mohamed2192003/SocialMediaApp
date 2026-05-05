@@ -45,7 +45,7 @@ class AuthService {
         if (user.EmailConfirmation) {
             throw new BadRequestExeption("Email Already Verified");
         }
-        const redisKey = `OTP:signup:${user._id} `;
+        const redisKey = `OTP::${user._id}`;
         const redisCode = await this.redisService.get(redisKey);
         if (!redisCode) {
             throw new BadRequestExeption("OTP Expired");
@@ -67,7 +67,7 @@ class AuthService {
         if (!matchedPassword) {
             throw new BadRequestExeption("Password is not matched");
         }
-        const { accessToken, refreshToken } = await generateToken({ result, issuer });
+        const { accessToken, refreshToken } = generateToken(result);
         return {
             result,
             accessToken,

@@ -14,6 +14,11 @@ const baseURL = process.env.BASE_URL as string;
 const redisUrl = process.env.REDIS_URL as string;
 const emailPass = process.env.EMAIL_PASS as string;
 const emailSender = process.env.EMAIL_SENDER as string;
+const awsAccessKeyId = process.env.AWS_ACCESS_KEY_ID as string; //get this from aws cloud in csv file
+const awsSecretAccessKey = process.env.AWS_SECRET_ACCESS_KEY as string;
+const awsRegion = process.env.AWS_REGION as string;
+const awsBucketName = process.env.AWS_BUCKET_NAME as string;
+const awsExpirationTime = process.env.AWS_EXPIRATION_TIME as string;
 export const env = { 
     mongoURL,
     mood, 
@@ -27,5 +32,10 @@ export const env = {
     baseURL, 
     redisUrl, 
     emailPass, 
-    emailSender 
+    emailSender,
+    awsAccessKeyId,
+    awsSecretAccessKey,
+    awsRegion,
+    awsBucketName,
+    awsExpirationTime
 }

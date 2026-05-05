@@ -38,28 +38,28 @@ class AuthService {
         })
         return result
     }
-    async verifyEmail ({ code, email }: {code: string, email: string}) {
+    async verifyEmail({ code, email }: { code: string, email: string }) {
         if (!code || !email) {
             throw new BadRequestExeption("Code and email are required")
         }
-        const user = await this.userRepo.findOne({email})
+        const user = await this.userRepo.findOne({ email })
         if (!user) {
             throw new NotFoundExeption("User Not Found")
         }
         if (user.EmailConfirmation) {
             throw new BadRequestExeption("Email Already Verified")
         }
-        const redisKey = `OTP:signup:${user._id} `
+        const redisKey = `OTP::${user._id}`
         const redisCode = await this.redisService.get(redisKey)
         if (!redisCode) {
             throw new BadRequestExeption("OTP Expired")
         }
-        const isMatch = await this.securityService.compareHash({plainText: code, cypherText: redisCode})
+        const isMatch = await this.securityService.compareHash({ plainText: code, cypherText: redisCode })
         if (!isMatch) {
             throw new BadRequestExeption("Invalid OTP")
         }
         const updatedUser = await this.userRepo.findOneAndUpdate(
-            { _id: user._id},
+            { _id: user._id },
             { EmailConfirmation: true },
             { new: true }
         )
@@ -75,7 +75,7 @@ class AuthService {
         if (!matchedPassword) {
             throw new BadRequestExeption("Password is not matched")
         }
-        const { accessToken, refreshToken } = await generateToken({result, issuer})
+        const { accessToken, refreshToken } = generateToken(result)
         return {
             result,
             accessToken,

@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { UnauthorizedExeption } from "../common/exeptions/application.exeption.js";
-import { RedisService } from './../common/services/redis.service.js';
+import { RedisService, redisConnection } from './../common/services/redis.service.js';
 import { JwtPayload } from "jsonwebtoken";
 import { TokenService } from './../common/services/token.service.js';
 declare global {
@@ -65,4 +65,7 @@ export class AuthMiddleware {
             next(error);
         }
     };
+
 }
+
+export const auth = new AuthMiddleware(redisConnection).auth;

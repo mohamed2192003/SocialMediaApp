@@ -1,35 +1,38 @@
-export {};
-// export const updateUser = async (userId, data, file) => {
-//     const existUser = await findOne({
-//         model: userModel,
-//         filter: { id: userId }
-//     })
-//     set({
-//         key: redisKey(userId),
-//         value:  '',
-//         ttl: 0
-//     })
-//     if (!existUser) {
-//         throw BadRequestException({ message: 'User not found' })
-//     }
-//     if (file) {
-//         data.imageProfileURL = `${env.baseURL}/uploads/${file.filename}`
-//     }
-//     const updatedUser = await findOneAndUpdate({
-//         model: userModel,
-//         filter: { id: userId },
-//         data,
-//         options: { new: true }
-//     })
-//     if (!updatedUser) {
-//         throw BadRequestException({ message: 'Failed to Update User' })
-//     }
-//     return updatedUser
-// }
-// export const deleteUser = async (userId) => {
-//   const userData = await findOneAndDelete({ model: userModel, filter: { id: userId } });
-//   if (!userData) {
-//     return NotFoundException({ message: "User Not Found" });
-//   }
-//   return { message: "User Deleted Successfully" };
-// };
+import userModel from "../../database/model/user.model.js";
+import { DatabaseRepository } from "../../database/repo/base.repo.js";
+import { NotFoundExeption } from "../../common/exeptions/application.exeption.js";
+import { S3Service } from "../../common/services/s3.service.js";
+import { MulterEnum } from "../../common/enums/multer.enum.js";
+export class UserService {
+    userRepository;
+    s3Service;
+    constructor() {
+        this.userRepository = new DatabaseRepository(userModel);
+        this.s3Service = new S3Service();
+    }
+    async getUserProfile(userId) {
+        const userData = await this.userRepository.findById(userId).select('-password');
+        if (!userData) {
+            throw new NotFoundExeption('User not found');
+        }
+        return userData;
+    }
+    async updateUserProfile(userId, file) {
+        const userData = await this.userRepository.findById(userId).select('-password');
+        if (!userData) {
+            throw new NotFoundExeption('User not found');
+        }
+        if (file) {
+            let { Key } = await this.s3Service.uploadBigAssets({
+                storageKey: MulterEnum.diskStorage,
+                path: `${userId}/profile-pic`,
+                file
+            });
+            if (Key !== undefined) {
+                userData.profilePic = Key;
+            }
+        }
+        return userData;
+    }
+}
+export const userService = new UserService();

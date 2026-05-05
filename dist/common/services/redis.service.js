@@ -2,58 +2,88 @@ import { createClient } from "redis";
 import { env } from "../../config/env.service.js";
 export class RedisService {
     client;
+    isConnected = false;
     constructor() {
         this.client = createClient({
             url: env.redisUrl,
             socket: {
                 tls: true,
-                rejectUnauthorized: false
-            }
+                rejectUnauthorized: false,
+                checkServerIdentity: () => undefined,
+            },
         });
         this.handleConnection();
     }
     handleConnection() {
         this.client.on("error", (err) => {
-            return console.log("❌ Redis Client Error");
+            console.error("❌ Redis Client Error:", err);
         });
         this.client.on("ready", () => {
             console.log("✅ Redis Client Connected");
+            this.isConnected = true;
+        });
+        this.client.on("end", () => {
+            console.log("⚠️ Redis connection closed");
+            this.isConnected = false;
+        });
+        this.client.on("reconnecting", () => {
+            console.log("🔄 Redis reconnecting...");
         });
     }
     async connect() {
-        await this.client.connect();
-        console.log("✅ Connected to Redis successfully");
+        try {
+            if (!this.client.isOpen) {
+                await this.client.connect();
+                console.log("✅ Redis connected");
+            }
+            console.log("Redis status:", this.client.isOpen);
+        }
+        catch (err) {
+            console.error("❌ Redis connection failed:", err);
+            throw err;
+        }
     }
-    createRevokeKey({ userId, token }) {
+    createRevokeKey({ userId, token, }) {
         return `RevokeToken::${userId}::${token}`;
     }
-    async set({ key, value, ttl }) {
-        if (typeof value == "object") {
-            value = JSON.stringify(value);
-        }
-        return ttl ? await this.client.set(key, value, { EX: ttl }) : await this.client.set(key, value);
+    async set({ key, value, ttl, }) {
+        const data = typeof value === "object" ? JSON.stringify(value) : value;
+        return ttl
+            ? await this.client.set(key, data, { EX: ttl })
+            : await this.client.set(key, data);
     }
     async get(key) {
-        let data = await this.client.get(key);
+        const data = await this.client.get(key);
+        if (!data)
+            return null;
         try {
-            if (data) {
-                data = JSON.parse(data);
-            }
+            return JSON.parse(data);
         }
-        catch (err) { }
-        return data;
+        catch {
+            return data;
+        }
     }
     async ttl(key) {
-        return await this.client.ttl(key);
+        return this.client.ttl(key);
     }
     async exists(key) {
-        return await this.client.exists(key);
+        return (await this.client.exists(key)) === 1;
     }
     async del(key) {
-        return await this.client.del(key);
+        return this.client.del(key);
     }
     async mget(...keys) {
-        return await this.client.mGet(keys);
+        const results = await this.client.mGet(keys);
+        return results.map((item) => {
+            if (!item)
+                return null;
+            try {
+                return JSON.parse(item);
+            }
+            catch {
+                return item;
+            }
+        });
     }
     async keys(prefix) {
         return await this.client.keys(`${prefix}*`);

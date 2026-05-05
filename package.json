@@ -4,14 +4,16 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start:dev": "cross-env NODE_ENV=dev concurrently \"tsc --watch\" \"node --watch dist/main.js\"",
-    "start:prod": "cross-env NODE_ENV=prod concurrently \"tsc --watch\" \"node --watch dist/main.js\""
+    "start:dev": "cross-env NODE_ENV=dev concurrently \"tsc --watch\" \"node --dns-result-order=ipv4first --watch dist/main.js\"",
+    "start:prod": "cross-env NODE_ENV=prod concurrently \"tsc --watch\" \"node --dns-result-order=ipv4first dist/main.js\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1042.0",
+    "@aws-sdk/lib-storage": "^3.1042.0",
     "@types/cors": "^2.8.19",
     "@types/dotenv": "^6.1.1",
     "@types/jsonwebtoken": "^9.0.10",
@@ -23,15 +25,19 @@
     "dotenv": "^17.4.2",
     "events": "^3.3.0",
     "express": "^5.2.1",
+    "fs": "^0.0.1-security",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.5.0",
+    "multer": "^2.1.1",
     "nodemailer": "^8.0.5",
+    "os": "^0.1.2",
     "redis": "^5.12.1",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.6",
+    "@types/multer": "^2.1.0",
     "concurrently": "^9.2.1"
   }
 }
