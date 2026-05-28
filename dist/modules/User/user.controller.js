@@ -10,8 +10,11 @@ router.get('/get-user-profile', auth, async (req, res) => {
     SuccessResponse({ res, message: "User Profile Data", data: userData });
 });
 router.patch('/update-user-profile', auth, uploadFile({ storageKey: MulterEnum.diskStorage }).single('file'), async (req, res) => {
-    console.log(req.file);
     let userData = await userService.updateUserProfile(req.userId, req.file);
+    SuccessResponse({ res, message: "User Profile Data", data: userData });
+});
+router.patch('/update-cover-pic', auth, uploadFile({ storageKey: MulterEnum.diskStorage }).array('files'), async (req, res) => {
+    let userData = await userService.updateCoverPic(req.userId, req.files);
     SuccessResponse({ res, message: "User Profile Data", data: userData });
 });
 export default router;

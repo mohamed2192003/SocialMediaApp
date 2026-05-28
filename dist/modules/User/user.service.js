@@ -2,7 +2,6 @@ import userModel from "../../database/model/user.model.js";
 import { DatabaseRepository } from "../../database/repo/base.repo.js";
 import { NotFoundExeption } from "../../common/exeptions/application.exeption.js";
 import { S3Service } from "../../common/services/s3.service.js";
-import { MulterEnum } from "../../common/enums/multer.enum.js";
 export class UserService {
     userRepository;
     s3Service;
@@ -22,16 +21,26 @@ export class UserService {
         if (!userData) {
             throw new NotFoundExeption('User not found');
         }
-        if (file) {
-            let { Key } = await this.s3Service.uploadBigAssets({
-                storageKey: MulterEnum.diskStorage,
-                path: `${userId}/profile-pic`,
-                file
-            });
-            if (Key !== undefined) {
-                userData.profilePic = Key;
-            }
+        let { url, key } = await this.s3Service.createPresignUrl({
+            path: `${userId}/profile-pic`
+        });
+        userData.profilePic = key;
+        await userData.save();
+        return { userData, url };
+    }
+    async updateCoverPic(userId, files) {
+        const userData = await this.userRepository.findById(userId).select('-password');
+        if (!userData) {
+            throw new NotFoundExeption('User not found');
         }
+        if (files.length > 0) {
+            let { key, result } = await this.s3Service.uploadAssets({
+                path: `${userData._id}/cover-pic`,
+                files
+            });
+            userData.profileCoverPic = result;
+        }
+        await userData.save();
         return userData;
     }
 }

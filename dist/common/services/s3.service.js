@@ -3,6 +3,7 @@ import { env } from "../../config/env.service.js";
 import { MulterEnum } from "../enums/multer.enum.js";
 import { createReadStream } from "fs";
 import { Upload } from "@aws-sdk/lib-storage";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 export class S3Service {
     client;
     constructor() {
@@ -14,7 +15,17 @@ export class S3Service {
             }
         });
     }
-    async uploadAssets({ storageKey = MulterEnum.diskStorage, Bucket = env.awsBucketName, path = "general", file, ACL = ObjectCannedACL.private, contentType }) {
+    async createPresignUrl({ Bucket = env.awsBucketName, path = "general", originalname, contentType }) {
+        const key = `socalMedia/${path}/${Math.round(Math.random() * 1e9)}-${originalname}`;
+        const result = new PutObjectCommand({
+            Bucket,
+            Key: key,
+            ContentType: contentType
+        });
+        const url = await getSignedUrl(this.client, result, { expiresIn: 60 * 2 });
+        return { url, key };
+    }
+    async uploadAsset({ storageKey = MulterEnum.diskStorage, Bucket = env.awsBucketName, path = "general", file, ACL = ObjectCannedACL.private, contentType }) {
         const key = `socalMedia/${path}/${Math.round(Math.random() * 1e9)}-${file.originalname}`;
         const result = await this.client.send(new PutObjectCommand({
             Bucket,
@@ -24,6 +35,20 @@ export class S3Service {
             ContentType: contentType || file.mimetype
         }));
         return key;
+    }
+    async uploadAssets({ storageKey = MulterEnum.diskStorage, Bucket = env.awsBucketName, path = "general", files, ACL = ObjectCannedACL.private, contentType, originalName }) {
+        const key = `socalMedia/${path}/${Math.round(Math.random() * 1e9)}-${originalName}`;
+        const result = await Promise.all(files.map(item => {
+            return this.uploadAsset({
+                storageKey,
+                Bucket,
+                path,
+                file: item,
+                ACL,
+                contentType: item.mimetype
+            });
+        }));
+        return { key, result };
     }
     async uploadBigAssets({ storageKey = MulterEnum.diskStorage, Bucket = env.awsBucketName, path = "general", file, ACL = ObjectCannedACL.private, contentType, partSize = 5 //min of chuck size is 5mb for multipart upload in s3
      }) {
